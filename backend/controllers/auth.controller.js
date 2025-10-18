@@ -3,13 +3,16 @@ import User from "../models/user.model.js"
 import bcrypt from "bcryptjs"
 import { generateTokenAndSetCookie } from "../utils/generateToken.utils.js"
 
-
 const SignupZodSchema = zod.object({
     username : zod.string(),
     firstName : zod.string(),
     lastName : zod.string(),
     email : zod.email(),
     password : zod.string()
+})
+const LoginZodSchema = zod.object({
+    username : zod.string(),
+    password : zod.string(),
 })
 
 export const signup = async (req, res) => {
@@ -76,9 +79,59 @@ export const signup = async (req, res) => {
 }
 
 export const login = async (req , res) => {
-
+    try {
+        const parsedBody = LoginZodSchema.safeParse(req.body)
+        if(!parsedBody.success){
+            return res.status(500).json({
+                error : "invalid input"
+            })
+        }
+        const {username , password} = parsedBody.data
+        const user = await User.findOne({username})
+        const isPassCorr = await bcrypt.compare(password,user?.password || "")
+        if(!user || !isPassCorr){
+            return res.status(400).json({
+                error : "Invalid username or password"
+            })
+        }
+        generateTokenAndSetCookie(user._id,res)
+        res.status(200).json({
+            _id : user._id,
+            firstName : user.firstName,
+            lastName : user.lastName,
+            email : user.email,
+            followers : user.followers,
+            following : user.following,
+            profileImg : user.profileImg,
+            coverImg : user.coverImg
+        })
+    } catch (error) {
+        res.status(500).json({
+            error : "Login internal Error"
+        })
+    }
 }
 
 export const logout = async (req , res) => {
+    try {
+        res.cookie("jwt" , "", {mazAge : 0})
+        res.status(200).json({
+            msg : "Logged out succesfully"
+        })
+    } catch (error) {
+        res.status(500).json({
+            error : "Logout internal Error"
+        })
+    }
+}
 
+export const authCheck = async (req , res) =>{
+    try {
+        const user = await User.findById(req.user._id).select("-password")
+        res.status(200).json(user)
+    } catch (error) {
+       res.status(500).json({
+            error : "Authcheck internal Error"
+        }) 
+    }
 }
