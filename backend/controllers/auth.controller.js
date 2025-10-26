@@ -72,6 +72,7 @@ export const signup = async (req, res) => {
     }
     }
     catch(error){
+        console.error(`Error Signup: ${error.message}`)
         res.status(500).json({
             error : "Signup internal error"
         })
@@ -106,6 +107,7 @@ export const login = async (req , res) => {
             coverImg : user.coverImg
         })
     } catch (error) {
+        console.error(`Error Login: ${error.message}`)
         res.status(500).json({
             error : "Login internal Error"
         })
@@ -119,6 +121,7 @@ export const logout = async (req , res) => {
             msg : "Logged out succesfully"
         })
     } catch (error) {
+        console.error(`Error logout: ${error.message}`)
         res.status(500).json({
             error : "Logout internal Error"
         })
@@ -130,6 +133,7 @@ export const authCheck = async (req , res) =>{
         const user = await User.findById(req.user._id).select("-password")
         res.status(200).json(user)
     } catch (error) {
+        console.error(`Error authcheck: ${error.message}`)
        res.status(500).json({
             error : "Authcheck internal Error"
         }) 
